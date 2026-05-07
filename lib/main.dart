@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:kiosk_mode/kiosk_mode.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -12,7 +11,7 @@ import 'package:audio_session/audio_session.dart' as audio_session;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+  // Anti-Screenshot sudah dipindah ke sistem Android langsung
   runApp(const MaterialApp(
     home: ExamBrowserFinal(),
     debugShowCheckedModeBanner: false,

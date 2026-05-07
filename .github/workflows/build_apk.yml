@@ -27,6 +27,20 @@ jobs:
           # Melengkapi struktur folder Flutter di server
           flutter create . --platforms android
           
+          # Tanam Fitur Anti-Screenshot langsung ke Jantung Android (MainActivity)
+          cat <<EOF > android/app/src/main/kotlin/com/example/msat_exambrowser/MainActivity.kt
+          package com.example.msat_exambrowser
+          import android.view.WindowManager
+          import io.flutter.embedding.android.FlutterActivity
+          import io.flutter.embedding.engine.FlutterEngine
+          class MainActivity: FlutterActivity() {
+              override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+                  window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                  super.configureFlutterEngine(flutterEngine)
+              }
+          }
+          EOF
+
           # Memastikan versi SDK sesuai untuk WebView
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk = .*/minSdk = 21/' android/app/build.gradle.kts
