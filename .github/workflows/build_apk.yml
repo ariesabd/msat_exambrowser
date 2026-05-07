@@ -1,0 +1,44 @@
+name: Build MSAT APK
+
+on:
+  workflow_dispatch: # Memungkinkan Anda menjalankan build secara manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Setup Project
+        run: |
+          # Melengkapi struktur folder Flutter di server
+          flutter create . --platforms android
+          
+          # Memastikan versi SDK sesuai untuk WebView
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          
+      - name: Download Dependencies
+        run: flutter pub get
+
+      - name: Generate App Icons
+        run: flutter pub run flutter_launcher_icons
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Xambro-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
