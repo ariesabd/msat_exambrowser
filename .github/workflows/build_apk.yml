@@ -28,7 +28,11 @@ jobs:
           flutter create . --platforms android
           
           # Memastikan versi SDK sesuai untuk WebView
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdk = .*/minSdk = 21/' android/app/build.gradle.kts
+          else
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          fi
           
       - name: Download Dependencies
         run: flutter pub get
