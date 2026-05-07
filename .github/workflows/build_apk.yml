@@ -1,7 +1,9 @@
 name: Build MSAT APK
 
 on:
-  workflow_dispatch: # Memungkinkan Anda menjalankan build secara manual
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
