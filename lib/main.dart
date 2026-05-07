@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -27,27 +29,74 @@ class ExamBrowserFinal extends StatefulWidget {
 
 class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBindingObserver {
   InAppWebViewController? webViewController;
-  
-  // --- CARA GANTI LINK ---
-  // Ganti link di bawah ini jika alamat web ujian Anda berubah, 
-  // lalu build ulang APK-nya.
-  final String currentUrl = "https://mgmp.anbk.my.id/";
-  // -----------------------
-
   final String customUserAgent = "MSAT-ExamBrowser-V1";
   final String exitPassword = "1111";
+  
+  // URL Pusat untuk mengecek ID (Discovery Server)
+  final String discoveryBaseUrl = "https://mgmp.anbk.my.id/";
 
   final AudioPlayer audioPlayer = AudioPlayer();
+  bool isVerified = false;
   bool isLoading = true;
   bool isError = false;
   double progress = 0;
   String errorMsg = "";
+  String? targetUrl;
+  final TextEditingController _idController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkInitialStatus();
+  }
+
+  void _checkInitialStatus() async {
+    // Cek apakah sudah pernah verifikasi sebelumnya (bisa ditambah shared_preferences nanti)
+    setState(() {
+      isLoading = false;
+    });
     _setupExamEnvironment();
+  }
+
+  Future<void> _verifyExamId(String id) async {
+    if (id.isEmpty) return;
+
+    setState(() {
+      isLoading = true;
+      isError = false;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse("${discoveryBaseUrl}student/exam/verify-id?id=$id"),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          setState(() {
+            targetUrl = data['url'];
+            isVerified = true;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isError = true;
+            errorMsg = data['message'] ?? "ID tidak valid.";
+            isLoading = false;
+          });
+        }
+      } else {
+        throw Exception("Gagal terhubung ke server verifikasi.");
+      }
+    } catch (e) {
+      setState(() {
+        isError = true;
+        errorMsg = "Koneksi Gagal: Pastikan Anda terhubung ke internet.";
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _setupExamEnvironment() async {
@@ -198,75 +247,57 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
           ],
         ),
       ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    if (!isVerified) return _buildDiscoveryScreen();
+    
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         _showExitDialog();
-        return false;
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         body: SafeArea(
-          child: Stack(
+          child: Column(
             children: [
-              if (currentUrl.isNotEmpty && !isError)
-                InAppWebView(
-                  initialUrlRequest: URLRequest(url: WebUri(currentUrl)),
-                  initialSettings: InAppWebViewSettings(
-                    userAgent: customUserAgent,
-                    disableContextMenu: true,
-                    supportZoom: false,
-                    overScrollMode: OverScrollMode.NEVER,
-                    useOnLoadResource: true,
-                    javaScriptEnabled: true,
-                    allowsInlineMediaPlayback: true,
-                  ),
-                  onWebViewCreated: (controller) => webViewController = controller,
-                  onLoadStart: (controller, url) => setState(() => isLoading = true),
-                  onLoadStop: (controller, url) => setState(() => isLoading = false),
-                  onProgressChanged: (controller, p) => setState(() => progress = p / 100),
-                  onReceivedError: (controller, request, error) {
-                    setState(() {
-                      isError = true;
-                      errorMsg = "Gagal memuat halaman: ${error.description}";
-                    });
-                  },
+              if (isLoading || progress < 1.0)
+                LinearProgressIndicator(
+                  value: progress > 0 ? progress : null,
+                  backgroundColor: Colors.grey[900],
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.indigo),
                 ),
-              
-              if (isError) _buildErrorView(),
-
-              if (isLoading && !isError)
-                Container(
-                  color: Colors.white,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/logo.png', height: 100, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 100, color: Colors.indigo)),
-                        const SizedBox(height: 30),
-                        const SizedBox(
-                          width: 200,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color(0xFFEEEEEE),
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        const Text("Menyiapkan Ruang Ujian...", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1.2)),
-                      ],
+              Expanded(
+                child: Stack(
+                  children: [
+                    InAppWebView(
+                      initialUrlRequest: URLRequest(url: WebUri(targetUrl!)),
+                      initialSettings: InAppWebViewSettings(
+                        userAgent: customUserAgent,
+                        useShouldOverrideUrlLoading: true,
+                        mediaPlaybackRequiresUserGesture: false,
+                        allowsInlineMediaPlayback: true,
+                        iframeAllowFullscreenVideo: true,
+                        cacheEnabled: false,
+                        clearCache: true,
+                      ),
+                      onWebViewCreated: (controller) {
+                        webViewController = controller;
+                      },
+                      onProgressChanged: (controller, p) {
+                        setState(() {
+                          progress = p / 100;
+                          if (progress == 1.0) isLoading = false;
+                        });
+                      },
+                      onLoadError: (controller, url, code, message) {
+                        setState(() {
+                          isError = true;
+                          errorMsg = "Gagal memuat halaman ujian.";
+                        });
+                      },
                     ),
-                  ),
-                ),
-              
-              // Progress bar tipis di bagian paling atas
-              if (isLoading && progress > 0 && progress < 1.0)
-                Positioned(
-                  top: 0,
-                  left: 0,
                   right: 0,
                   child: LinearProgressIndicator(
                     value: progress,
