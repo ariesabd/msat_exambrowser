@@ -37,6 +37,14 @@ jobs:
       - name: Download Dependencies
         run: flutter pub get
 
+      - name: Patch Problematic Plugins (Namespace Fix)
+        run: |
+          # Memperbaiki error 'Namespace not specified' pada library flutter_windowmanager
+          FILE_PATH="/home/runner/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0/android/build.gradle"
+          if [ -f "$FILE_PATH" ]; then
+            sed -i 's/android {/android {\n    namespace "io.github.m_asaba.flutter_windowmanager"/' "$FILE_PATH"
+          fi
+
       - name: Generate App Icons
         run: flutter pub run flutter_launcher_icons
 
