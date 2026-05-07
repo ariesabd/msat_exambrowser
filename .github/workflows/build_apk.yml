@@ -37,21 +37,22 @@ jobs:
       - name: Download Dependencies
         run: flutter pub get
 
-      - name: Patch Problematic Plugins (Namespace Fix)
+      - name: Universal Plugin Patch (Namespace Fix)
         run: |
-          # Memperbaiki error 'Namespace not specified' pada library lama
-          
-          # Patch untuk flutter_windowmanager
-          FILE_WM="/home/runner/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0/android/build.gradle"
-          if [ -f "$FILE_WM" ]; then
-            sed -i 's/android {/android {\n    namespace "io.github.m_asaba.flutter_windowmanager"/' "$FILE_WM"
-          fi
-
-          # Patch untuk kiosk_mode
-          FILE_KIOSK="/home/runner/.pub-cache/hosted/pub.dev/kiosk_mode-0.3.0+1/android/build.gradle"
-          if [ -f "$FILE_KIOSK" ]; then
-            sed -i 's/android {/android {\n    namespace "com.mews.kiosk_mode"/' "$FILE_KIOSK"
-          fi
+          # Skrip sakti untuk memperbaiki SEMUA library yang tidak punya namespace
+          find /home/runner/.pub-cache/hosted/pub.dev -name "build.gradle" | while read -r file; do
+            if ! grep -q "namespace" "$file"; then
+              # Cari nama paket dari AndroidManifest.xml
+              MANIFEST_PATH="$(dirname "$file")/src/main/AndroidManifest.xml"
+              if [ -f "$MANIFEST_PATH" ]; then
+                PACKAGE_NAME=$(grep -oP 'package="\K[^"]+' "$MANIFEST_PATH" | head -1)
+                if [ -n "$PACKAGE_NAME" ]; then
+                  echo "Patching namespace for $PACKAGE_NAME in $file"
+                  sed -i "s/android {/android {\n    namespace \"$PACKAGE_NAME\"/" "$file"
+                fi
+              fi
+            fi
+          done
 
       - name: Generate App Icons
         run: flutter pub run flutter_launcher_icons

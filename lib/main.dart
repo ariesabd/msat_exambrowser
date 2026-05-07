@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,7 @@ import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:kiosk_mode/kiosk_mode.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:audio_session/audio_session.dart';
-import 'package:http/http.dart' as http;
-import 'dart:async';
+import 'package:audio_session/audio_session.dart' as audio_session;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +36,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
 
   final AudioPlayer audioPlayer = AudioPlayer();
   bool isVerified = false;
-  bool isLoading = true;
+  bool isLoading = false;
   bool isError = false;
   double progress = 0;
   String errorMsg = "";
@@ -48,15 +47,30 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkInitialStatus();
+    _setupExamEnvironment();
   }
 
-  void _checkInitialStatus() async {
-    // Cek apakah sudah pernah verifikasi sebelumnya (bisa ditambah shared_preferences nanti)
-    setState(() {
-      isLoading = false;
-    });
-    _setupExamEnvironment();
+  Future<void> _setupExamEnvironment() async {
+    try {
+      await WakelockPlus.enable();
+      await startKioskMode();
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      
+      // Clear cache on startup for security
+      await InAppWebViewController.clearAllCache();
+
+      final session = await audio_session.AudioSession.instance;
+      await session.configure(const audio_session.AudioSessionConfiguration(
+        avAudioSessionCategory: audio_session.AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions: audio_session.AVAudioSessionCategoryOptions.defaultToSpeaker,
+        androidAudioAttributes: audio_session.AndroidAudioAttributes(
+          usage: audio_session.AndroidAudioUsage.alarm,
+          contentType: audio_session.AndroidAudioContentType.sonification,
+        ),
+      ));
+    } catch (e) {
+      debugPrint("Setup error: $e");
+    }
   }
 
   Future<void> _verifyExamId(String id) async {
@@ -99,29 +113,6 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     }
   }
 
-  Future<void> _setupExamEnvironment() async {
-    try {
-      await WakelockPlus.enable();
-      await startKioskMode();
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      
-      // Clear cache on startup for security
-      await InAppWebViewController.clearAllCache();
-
-      final session = await AudioSession.instance;
-      await session.configure(const AudioSessionConfiguration(
-        avAudioSessionCategory: AVAudioSessionCategory.playback,
-        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.defaultToSpeaker,
-        androidAudioAttributes: AndroidAudioAttributes(
-          usage: AndroidAudioUsage.alarm,
-          contentType: AndroidAudioContentType.sonification,
-        ),
-      ));
-    } catch (e) {
-      debugPrint("Setup error: $e");
-    }
-  }
-
   @override
   void dispose() {
     WakelockPlus.disable();
@@ -160,52 +151,31 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Row(
-          children: [
-            Icon(Icons.lock_outline, color: Colors.indigo.shade800),
-            const SizedBox(width: 10),
-            const Text('Otoritas Proktor', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
+        title: const Text('Otoritas Proktor', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Masukkan password untuk menutup ujian:', style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const Text('Masukkan password untuk keluar:', style: TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 15),
             TextField(
               controller: _passController,
               obscureText: true,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                prefixIcon: const Icon(Icons.password),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
                 hintText: 'PIN Keamanan',
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: Text('BATAL', style: TextStyle(color: Colors.grey.shade600))
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('BATAL')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo.shade800,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
             onPressed: () {
               if (_passController.text == exitPassword) {
                 stopKioskMode().then((_) => SystemNavigator.pop());
               } else {
-                HapticFeedback.vibrate();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password Salah!'), backgroundColor: Colors.redAccent)
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password Salah!')));
               }
             },
             child: const Text('KELUAR'),
@@ -215,38 +185,6 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     );
   }
 
-  Widget _buildErrorView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 80, color: Colors.indigo.shade200),
-            const SizedBox(height: 20),
-            const Text("Koneksi Bermasalah", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text(errorMsg, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  isError = false;
-                  isLoading = true;
-                });
-                _fetchTargetUrl();
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text("COBA LAGI"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
   @override
   Widget build(BuildContext context) {
     if (!isVerified) return _buildDiscoveryScreen();
@@ -278,13 +216,11 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         useShouldOverrideUrlLoading: true,
                         mediaPlaybackRequiresUserGesture: false,
                         allowsInlineMediaPlayback: true,
-                        iframeAllowFullscreenVideo: true,
+                        allowsFullscreenVideo: true,
                         cacheEnabled: false,
                         clearCache: true,
                       ),
-                      onWebViewCreated: (controller) {
-                        webViewController = controller;
-                      },
+                      onWebViewCreated: (controller) => webViewController = controller,
                       onProgressChanged: (controller, p) {
                         setState(() {
                           progress = p / 100;
@@ -298,28 +234,109 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         });
                       },
                     ),
-                  right: 0,
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: Colors.transparent,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
-                  ),
-                ),
-
-              // Tombol Keluar Tersembunyi
-              Positioned(
-                top: 5,
-                right: 5,
-                child: Opacity(
-                  opacity: 0.05,
-                  child: IconButton(
-                    icon: const Icon(Icons.close_fullscreen, size: 20),
-                    onPressed: _showExitDialog,
-                  ),
+                    if (isError) _buildErrorView(),
+                  ],
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 80, color: Colors.red),
+            const SizedBox(height: 20),
+            const Text("Koneksi Bermasalah", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text(errorMsg, textAlign: TextAlign.center),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  isError = false;
+                  isLoading = true;
+                });
+                webViewController?.reload();
+              },
+              child: const Text("Coba Lagi"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiscoveryScreen() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F172A), Color(0xFF1E1B4B)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Image.asset('assets/logo.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.white)),
+                ),
+                const SizedBox(height: 30),
+                const Text("XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.black, letterSpacing: 5)),
+                const Text("MSAT EXAM BROWSER", style: TextStyle(color: Colors.indigoAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                const SizedBox(height: 50),
+                Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(35)),
+                  child: Column(
+                    children: [
+                      const Text("MASUKKAN ID UJIAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.black, color: Colors.grey)),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _idController,
+                        textAlign: TextAlign.center,
+                        textCapitalization: TextCapitalization.characters,
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.black, letterSpacing: 8),
+                        decoration: const InputDecoration(hintText: "ABCDEF", border: InputBorder.none),
+                      ),
+                      const SizedBox(height: 20),
+                      if (isError) Text(errorMsg, style: const TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : () => _verifyExamId(_idController.text),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4F46E5), padding: const EdgeInsets.symmetric(vertical: 18)),
+                          child: isLoading
+                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
+                              : const Text("MULAI UJIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
