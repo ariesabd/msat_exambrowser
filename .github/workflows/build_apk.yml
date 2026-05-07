@@ -39,10 +39,18 @@ jobs:
 
       - name: Patch Problematic Plugins (Namespace Fix)
         run: |
-          # Memperbaiki error 'Namespace not specified' pada library flutter_windowmanager
-          FILE_PATH="/home/runner/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0/android/build.gradle"
-          if [ -f "$FILE_PATH" ]; then
-            sed -i 's/android {/android {\n    namespace "io.github.m_asaba.flutter_windowmanager"/' "$FILE_PATH"
+          # Memperbaiki error 'Namespace not specified' pada library lama
+          
+          # Patch untuk flutter_windowmanager
+          FILE_WM="/home/runner/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0/android/build.gradle"
+          if [ -f "$FILE_WM" ]; then
+            sed -i 's/android {/android {\n    namespace "io.github.m_asaba.flutter_windowmanager"/' "$FILE_WM"
+          fi
+
+          # Patch untuk kiosk_mode
+          FILE_KIOSK="/home/runner/.pub-cache/hosted/pub.dev/kiosk_mode-0.3.0+1/android/build.gradle"
+          if [ -f "$FILE_KIOSK" ]; then
+            sed -i 's/android {/android {\n    namespace "com.mews.kiosk_mode"/' "$FILE_KIOSK"
           fi
 
       - name: Generate App Icons
