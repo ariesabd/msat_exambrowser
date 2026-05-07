@@ -216,7 +216,6 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         useShouldOverrideUrlLoading: true,
                         mediaPlaybackRequiresUserGesture: false,
                         allowsInlineMediaPlayback: true,
-                        allowsFullscreenVideo: true,
                         cacheEnabled: false,
                         clearCache: true,
                       ),
@@ -302,7 +301,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                   child: Image.asset('assets/logo.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.white)),
                 ),
                 const SizedBox(height: 30),
-                const Text("XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.black, letterSpacing: 5)),
+                const Text("XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 5)),
                 const Text("MSAT EXAM BROWSER", style: TextStyle(color: Colors.indigoAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
                 const SizedBox(height: 50),
                 Container(
@@ -310,13 +309,13 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(35)),
                   child: Column(
                     children: [
-                      const Text("MASUKKAN ID UJIAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.black, color: Colors.grey)),
+                      const Text("MASUKKAN ID UJIAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey)),
                       const SizedBox(height: 10),
                       TextField(
                         controller: _idController,
                         textAlign: TextAlign.center,
                         textCapitalization: TextCapitalization.characters,
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.black, letterSpacing: 8),
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 8),
                         decoration: const InputDecoration(hintText: "ABCDEF", border: InputBorder.none),
                       ),
                       const SizedBox(height: 20),
@@ -329,7 +328,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4F46E5), padding: const EdgeInsets.symmetric(vertical: 18)),
                           child: isLoading
                               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                              : const Text("MULAI UJIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black)),
+                              : const Text("MULAI UJIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                         ),
                       ),
                     ],
