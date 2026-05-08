@@ -286,55 +286,132 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Image.asset('assets/logo.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.white)),
+          child: Stack(
+            children: [
+              // Tombol Keluar Tersembunyi tapi jelas
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.power_settings_new_rounded, color: Colors.white24, size: 28),
+                  onPressed: _showExitDialog,
                 ),
-                const SizedBox(height: 30),
-                const Text("XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 5)),
-                const Text("MSAT EXAM BROWSER", style: TextStyle(color: Colors.indigoAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                const SizedBox(height: 50),
-                Container(
-                  padding: const EdgeInsets.all(25),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(35)),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: SingleChildScrollView(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("MASUKKAN ID UJIAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey)),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _idController,
-                        textAlign: TextAlign.center,
-                        textCapitalization: TextCapitalization.characters,
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 8),
-                        decoration: const InputDecoration(hintText: "ABCDEF", border: InputBorder.none),
+                      const SizedBox(height: 60),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Image.asset('assets/logo.png', height: 80, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.white)),
                       ),
-                      const SizedBox(height: 20),
-                      if (isError) Text(errorMsg, style: const TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: isLoading ? null : () => _verifyExamId(_idController.text),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4F46E5), padding: const EdgeInsets.symmetric(vertical: 18)),
-                          child: isLoading
-                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                              : const Text("MULAI UJIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 30),
+                      const Text("XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 5)),
+                      const Text("MSAT EXAM BROWSER", style: TextStyle(color: Colors.indigoAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                      const SizedBox(height: 40),
+                      
+                      // Input Card
+                      Container(
+                        padding: const EdgeInsets.all(25),
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
+                          borderRadius: BorderRadius.circular(35),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))
+                          ]
+                        ),
+                        child: Column(
+                          children: [
+                            const Text("MASUKKAN ID UJIAN", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                            const SizedBox(height: 15),
+                            TextField(
+                              controller: _idController,
+                              textAlign: TextAlign.center,
+                              textCapitalization: TextCapitalization.characters,
+                              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 8, color: Color(0xFF1E293B)),
+                              decoration: InputDecoration(
+                                hintText: "", 
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 2),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 2),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            if (isError) Text(errorMsg, style: const TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: isLoading ? null : () => _verifyExamId(_idController.text),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4F46E5), 
+                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
+                                    : const Text("MULAI UJIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black)),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      
+                      const SizedBox(height: 30),
+                      
+                      // Kesiapan Perangkat Card
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.indigoAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: Colors.indigoAccent.withOpacity(0.2))
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.indigoAccent, size: 24),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossorigin: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Kesiapan Perangkat:", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Pastikan koneksi internet stabil dan baterai perangkat Anda mencukupi selama ujian berlangsung.",
+                                    style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
