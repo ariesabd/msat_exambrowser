@@ -66,8 +66,14 @@ jobs:
               if [ -f "$MANIFEST_PATH" ]; then
                 PACKAGE_NAME=$(grep -oP 'package="\K[^"]+' "$MANIFEST_PATH" | head -1)
                 if [ -n "$PACKAGE_NAME" ]; then
-                  echo "Patching namespace for $PACKAGE_NAME in $file"
+                  echo "Patching namespace & SDK for $PACKAGE_NAME in $file"
                   sed -i "s/android {/android {\n    namespace \"$PACKAGE_NAME\"/" "$file"
+                  
+                  # Paksa semua library pakai SDK 34 agar tidak error lStar
+                  sed -i 's/compileSdkVersion .*/compileSdkVersion 34/' "$file"
+                  sed -i 's/targetSdkVersion .*/targetSdkVersion 34/' "$file"
+                  sed -i 's/compileSdk = .*/compileSdk = 34/' "$file"
+                  sed -i 's/targetSdk = .*/targetSdk = 34/' "$file"
                 fi
               fi
             fi
