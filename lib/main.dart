@@ -363,7 +363,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                           child: ElevatedButton.icon(
                             onPressed: _openScanner,
                             icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 24),
-                            label: const Text("SCAN QR CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black, fontSize: 16)),
+                            label: const Text("SCAN QR CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.indigoAccent,
                               padding: const EdgeInsets.symmetric(vertical: 20),
