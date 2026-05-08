@@ -29,6 +29,7 @@ void main() async {
       await windowManager.focus();
       await windowManager.setFullScreen(true);
       await windowManager.setPreventClose(true);
+      await windowManager.setAlwaysOnTop(true);
     });
   }
 
@@ -45,7 +46,7 @@ class ExamBrowserFinal extends StatefulWidget {
   State<ExamBrowserFinal> createState() => _ExamBrowserFinalState();
 }
 
-class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBindingObserver {
+class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBindingObserver, WindowListener {
   InAppWebViewController? webViewController;
   final String customUserAgent = "MSAT-ExamBrowser-V1";
   final String exitPassword = "1111";
@@ -64,8 +65,16 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    windowManager.addListener(this);
     _setupExamEnvironment();
     _checkSavedUrl();
+  }
+
+  @override
+  void onWindowBlur() {
+    if (isUrlSet) {
+      _reportViolation("Aplikasi kehilangan fokus (Alt+Tab/Win Key)");
+    }
   }
 
   Future<void> _checkSavedUrl() async {
@@ -135,7 +144,9 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   Future<void> _setupExamEnvironment() async {
     try {
       await WakelockPlus.enable();
-      await startKioskMode();
+      if (!Platform.isWindows) {
+        await startKioskMode();
+      }
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       await InAppWebViewController.clearAllCache();
 
@@ -156,9 +167,12 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   @override
   void dispose() {
     WakelockPlus.disable();
-    stopKioskMode();
+    if (!Platform.isWindows) {
+      stopKioskMode();
+    }
     audioPlayer.dispose();
     _urlController.dispose();
+    windowManager.removeListener(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -206,13 +220,11 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 if (isReset) {
                   _resetUrl();
                 } else {
-                  stopKioskMode().then((_) {
-                    if (Platform.isWindows) {
-                      exit(0);
-                    } else {
-                      SystemNavigator.pop();
-                    }
-                  });
+                  if (Platform.isWindows) {
+                    exit(0);
+                  } else {
+                    stopKioskMode().then((_) => SystemNavigator.pop());
+                  }
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password Salah!')));
