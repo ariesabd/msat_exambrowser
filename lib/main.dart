@@ -75,10 +75,8 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     }
 
     try {
-      // Cek apakah ini web MSAT asli (Panggil API verifikasi sederhana)
       final response = await http.get(Uri.parse(formattedUrl + "student/exam/verify-id?id=CHECK")).timeout(const Duration(seconds: 5));
       
-      // Jika server menjawab (meskipun ID salah), berarti ini web MSAT
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('exam_url', formattedUrl);
@@ -110,6 +108,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     setState(() {
       isUrlSet = false;
       currentUrl = "";
+      isLoading = false;
     });
   }
 
@@ -193,7 +192,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password Salah!')));
               }
             },
-            child: Text(isReset ? 'RESET' : 'KELUAR'),
+            child: Text(isReset ? 'OK' : 'KELUAR'),
           ),
         ],
       ),
@@ -290,18 +289,19 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Digital Clock (Kiri)
+                    // Digital Clock
                     StreamBuilder(
                       stream: Stream.periodic(const Duration(seconds: 1)),
                       builder: (context, snapshot) {
+                        final now = DateTime.now();
                         return Text(
-                          "${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}",
+                          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
                           style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'monospace'),
                         );
                       },
                     ),
                     
-                    // Center Branding (Hanya Tampilan)
+                    // Center Branding (Static)
                     Row(
                       children: [
                         Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
@@ -310,7 +310,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       ],
                     ),
 
-                    // Exit Button (Power - Kanan)
+                    // Exit Button
                     IconButton(
                       icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 26),
                       onPressed: () => _showExitDialog(),
@@ -340,7 +340,6 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
         child: SafeArea(
           child: Stack(
             children: [
-              // Tombol Keluar (Ikon Power)
               Positioned(
                 top: 10,
                 right: 10,
@@ -352,123 +351,112 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
               Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo Container with Glow
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(35),
-                      boxShadow: [
-                        BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 30, spreadRadius: 5)
-                      ]
-                    ),
-                    child: Image.asset('assets/logo.png', height: 100, errorBuilder: (_,__,___) => const Icon(Icons.school, size: 100, color: Colors.white)),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // Title Section
-                  const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 4)),
-                  const SizedBox(height: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                    decoration: BoxDecoration(color: Colors.indigoAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
-                    child: const Text("SMART EXAM SOLUTION", style: TextStyle(color: Colors.indigoAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                  ),
-                  const SizedBox(height: 50),
-                  
-                  // Setup Card (Glassmorphism)
-                  Container(
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text("KONFIGURASI UJIAN", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                        const SizedBox(height: 25),
-                        
-                        // Scan Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _openScanner,
-                            icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 24),
-                            label: const Text("SCAN QR CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.indigoAccent,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              elevation: 10,
-                              shadowColor: Colors.indigoAccent.withOpacity(0.5),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            ),
-                          ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(35),
+                          boxShadow: [
+                            BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 30, spreadRadius: 5)
+                          ]
                         ),
-                        
-                        const SizedBox(height: 25),
-                        Row(
+                        child: Image.asset('assets/logo.png', height: 100, errorBuilder: (_,__,___) => const Icon(Icons.school, size: 100, color: Colors.white)),
+                      ),
+                      const SizedBox(height: 40),
+                      const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 4)),
+                      const SizedBox(height: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                        decoration: BoxDecoration(color: Colors.indigoAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
+                        child: const Text("SMART EXAM SOLUTION", style: TextStyle(color: Colors.indigoAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                      ),
+                      const SizedBox(height: 50),
+                      Container(
+                        padding: const EdgeInsets.all(25),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Column(
                           children: [
-                            Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 15),
-                              child: Text("ATAU", style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold)),
+                            const Text("KONFIGURASI UJIAN", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                            const SizedBox(height: 25),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _openScanner,
+                                icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 24),
+                                label: const Text("SCAN QR CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.indigoAccent,
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  elevation: 10,
+                                  shadowColor: Colors.indigoAccent.withOpacity(0.5),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                              ),
                             ),
-                            Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                            const SizedBox(height: 25),
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text("ATAU", style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ),
+                                Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                              ],
+                            ),
+                            const SizedBox(height: 25),
+                            TextField(
+                              controller: _urlController,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              decoration: InputDecoration(
+                                hintText: "Ketik Link Ujian Manual...",
+                                hintStyle: const TextStyle(color: Colors.white24, fontWeight: FontWeight.normal),
+                                filled: true,
+                                fillColor: Colors.black.withOpacity(0.3),
+                                prefixIcon: const Icon(Icons.link, color: Colors.white30),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Colors.indigoAccent, width: 2)),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.send_rounded, color: Colors.indigoAccent),
+                                  onPressed: () => _saveAndOpenUrl(_urlController.text),
+                                ),
+                              ),
+                              onSubmitted: (val) => _saveAndOpenUrl(val),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 25),
-
-                        // Manual Input
-                        TextField(
-                          controller: _urlController,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                            hintText: "Ketik Link Ujian Manual...",
-                            hintStyle: const TextStyle(color: Colors.white24, fontWeight: FontWeight.normal),
-                            filled: true,
-                            fillColor: Colors.black.withOpacity(0.3),
-                            prefixIcon: const Icon(Icons.link, color: Colors.white30),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: Colors.indigoAccent, width: 2)),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.send_rounded, color: Colors.indigoAccent),
-                              onPressed: () => _saveAndOpenUrl(_urlController.text),
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.bolt_rounded, color: Colors.amber, size: 18),
+                            SizedBox(width: 10),
+                            Text(
+                              "Pastikan Internet & Baterai Stabil",
+                              style: TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w500),
                             ),
-                          ),
-                          onSubmitted: (val) => _saveAndOpenUrl(val),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Device Status Info
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.bolt_rounded, color: Colors.amber, size: 18),
-                        SizedBox(width: 10),
-                        Text(
-                          "Pastikan Internet & Baterai Stabil",
-                          style: TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
