@@ -18,6 +18,8 @@ dependencies:
   kiosk_mode: ^0.3.0
   audioplayers: ^5.2.1
   audio_session: ^0.1.16
+  window_manager: ^0.3.9
+  screen_retriever: ^0.1.9
 
 dev_dependencies:
   flutter_test:

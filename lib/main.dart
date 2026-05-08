@@ -9,9 +9,29 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:audio_session/audio_session.dart' as audio_session;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:io';
+import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = const WindowOptions(
+      fullScreen: true,
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+      await windowManager.setFullScreen(true);
+      await windowManager.setPreventClose(true);
+    });
+  }
+
   runApp(const MaterialApp(
     home: ExamBrowserFinal(),
     debugShowCheckedModeBanner: false,
