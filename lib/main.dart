@@ -206,7 +206,13 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 if (isReset) {
                   _resetUrl();
                 } else {
-                  stopKioskMode().then((_) => SystemNavigator.pop());
+                  stopKioskMode().then((_) {
+                    if (Platform.isWindows) {
+                      exit(0);
+                    } else {
+                      SystemNavigator.pop();
+                    }
+                  });
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password Salah!')));

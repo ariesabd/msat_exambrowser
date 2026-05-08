@@ -1,4 +1,4 @@
-name: Build MSAT Windows
+name: Build MSAT Windows EXE
 
 on:
   push:
@@ -16,10 +16,13 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Setup Project
+      - name: Setup Windows Project
         run: |
-          # Melengkapi struktur folder Windows di server
-          flutter create --platforms windows .
+          # Inisialisasi folder windows jika belum ada
+          flutter create . --platforms windows
+          
+          # Bersihkan build lama
+          flutter clean
           
       - name: Download Dependencies
         run: flutter pub get
@@ -27,8 +30,13 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release
 
-      - name: Upload Windows Build
+      - name: Zip Release
+        run: |
+          # Masuk ke folder hasil build dan bungkus jadi ZIP
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath MSAT-ExamBrowser-Windows.zip
+
+      - name: Upload EXE Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MSAT-Windows-Xambro
-          path: build/windows/x64/runner/Release/
+          name: MSAT-Windows-EXE
+          path: MSAT-ExamBrowser-Windows.zip
