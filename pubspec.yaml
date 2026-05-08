@@ -13,6 +13,8 @@ dependencies:
   url_launcher: ^6.2.0
   wakelock_plus: ^1.1.4
   http: ^1.2.0
+  shared_preferences: ^2.2.3
+  mobile_scanner: ^5.1.0
   kiosk_mode: ^0.3.0
   audioplayers: ^5.2.1
   audio_session: ^0.1.16
