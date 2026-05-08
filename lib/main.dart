@@ -290,13 +290,18 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Edit Button (Pencil)
-                    IconButton(
-                      icon: const Icon(Icons.edit_note_rounded, color: Colors.white70, size: 26),
-                      onPressed: () => _showExitDialog(isReset: true),
+                    // Digital Clock (Kiri)
+                    StreamBuilder(
+                      stream: Stream.periodic(const Duration(seconds: 1)),
+                      builder: (context, snapshot) {
+                        return Text(
+                          "${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}",
+                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'monospace'),
+                        );
+                      },
                     ),
                     
-                    // Center Branding
+                    // Center Branding (Hanya Tampilan)
                     Row(
                       children: [
                         Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
@@ -305,7 +310,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       ],
                     ),
 
-                    // Exit Button (Power)
+                    // Exit Button (Power - Kanan)
                     IconButton(
                       icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 26),
                       onPressed: () => _showExitDialog(),
