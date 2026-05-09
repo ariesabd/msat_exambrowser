@@ -432,6 +432,46 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
         body: SafeArea(
           child: Column(
             children: [
+              // Top Bar Navigation (Moved from Bottom)
+              Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1B4B),
+                  border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Digital Clock
+                    StreamBuilder(
+                      stream: Stream.periodic(const Duration(seconds: 1)),
+                      builder: (context, snapshot) {
+                        final now = DateTime.now();
+                        return Text(
+                          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
+                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'monospace'),
+                        );
+                      },
+                    ),
+                    
+                    // Center Branding (Static)
+                    Row(
+                      children: [
+                        Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
+                        const SizedBox(width: 10),
+                        const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
+                      ],
+                    ),
+
+                    // Exit Button
+                    IconButton(
+                      icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 26),
+                      onPressed: () => _showExitDialog(),
+                    ),
+                  ],
+                ),
+              ),
               if (isLoading || progress < 1.0)
                 LinearProgressIndicator(
                   value: progress > 0 ? progress : null,
@@ -486,46 +526,6 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       },
                     ),
                     if (isError) _buildErrorView(),
-                  ],
-                ),
-              ),
-              // Bottom Bar Navigation
-              Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1B4B),
-                  border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1), width: 1)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Digital Clock
-                    StreamBuilder(
-                      stream: Stream.periodic(const Duration(seconds: 1)),
-                      builder: (context, snapshot) {
-                        final now = DateTime.now();
-                        return Text(
-                          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
-                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'monospace'),
-                        );
-                      },
-                    ),
-                    
-                    // Center Branding (Static)
-                    Row(
-                      children: [
-                        Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
-                        const SizedBox(width: 10),
-                        const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
-                      ],
-                    ),
-
-                    // Exit Button
-                    IconButton(
-                      icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 26),
-                      onPressed: () => _showExitDialog(),
-                    ),
                   ],
                 ),
               ),
