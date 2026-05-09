@@ -282,9 +282,9 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.black.withOpacity(0.05)),
             boxShadow: [
               BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)
             ],
@@ -309,8 +309,8 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        isReset ? 'RESET KONFIGURASI' : 'OTORITAS PROKTOR',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+                        isReset ? 'RESET KONFIGURASI' : 'PASSWORD',
+                        style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -324,7 +324,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                     Text(
                       isReset ? 'Masukkan PIN untuk mengganti link ujian:' : 'Masukkan PIN untuk menutup aplikasi:',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                      style: const TextStyle(color: Colors.black54, fontSize: 13),
                     ),
                     const SizedBox(height: 20),
                     TextField(
@@ -333,12 +333,12 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       autofocus: true,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 10),
+                      style: const TextStyle(color: Color(0xFF0F172A), fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 10),
                       decoration: InputDecoration(
                         hintText: "••••",
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
+                        hintStyle: TextStyle(color: Colors.black.withOpacity(0.1)),
                         filled: true,
-                        fillColor: Colors.black.withOpacity(0.3),
+                        fillColor: Colors.black.withOpacity(0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.indigoAccent, width: 2)),
                       ),
@@ -349,7 +349,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('BATAL', style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold)),
+                            child: const Text('BATAL', style: TextStyle(color: Colors.black38, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 10),
