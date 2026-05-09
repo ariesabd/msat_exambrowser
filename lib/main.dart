@@ -60,6 +60,11 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   bool isError = false;
   double progress = 0;
   String errorMsg = "";
+  
+  // Security Layer
+  double? initialAspectRatio;
+  bool isViolationReported = false;
+  final String secureToken = 'TVNBVC1FWEFNLVNFQ1VSRS0yMDI2';
 
   @override
   void initState() {
@@ -178,20 +183,85 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    _checkSplitScreen();
+  }
+
+  void _checkSplitScreen() {
+    if (!isUrlSet || isViolationReported) return;
+
+    final double currentAspectRatio =
+        WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.aspectRatio;
+
+    if (initialAspectRatio == null) {
+      initialAspectRatio = currentAspectRatio;
+      return;
     }
-    if (state == AppLifecycleState.paused && isUrlSet) {
-      _reportViolation("Aplikasi ditinggalkan");
+
+    // Jika rasio berubah lebih dari 15%, anggap sebagai split screen
+    if ((currentAspectRatio - initialAspectRatio!).abs() > 0.15) {
+      _reportViolation("Layar terbagi (Split Screen)");
     }
   }
 
-  void _reportViolation(String type) {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      _checkSplitScreen(); // Re-check on resume
+    }
+    if (state == AppLifecycleState.paused && isUrlSet) {
+      _reportViolation("Aplikasi ditinggalkan (Home/Recent)");
+    }
+  }
+
+  void _reportViolation(String reason) {
+    if (isViolationReported) return;
+    isViolationReported = true;
+
+    // Play Alert Sound
     audioPlayer.play(AssetSource('alert.mp3'), volume: 1.0);
+
+    // 1. Laporan Langsung via HTTP (Paling Ampuh & Anti-Freeze)
+    _reportViolationDirect(reason);
+
+    // 2. Laporan via WebView (Jika masih aktif)
     webViewController?.evaluateJavascript(
-      source: "if(typeof reportViolation === 'function') { reportViolation('app_switch'); }"
+      source: "if(typeof reportViolation === 'function') { reportViolation('$reason'); }"
     );
+
+    // 3. UI Feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("PELANGGARAN: $reason"),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+    
+    // Reset flag after 5 seconds to allow reporting again if needed (or keep true to block)
+    Future.delayed(const Duration(seconds: 5), () => isViolationReported = false);
+  }
+
+  Future<void> _reportViolationDirect(String reason) async {
+    try {
+      final String reportUrl = "${currentUrl.endsWith('/') ? currentUrl : '$currentUrl/'}student/exam/report_violation_api";
+      
+      await http.post(
+        Uri.parse(reportUrl),
+        headers: {
+          'X-MSAT-Auth-Token': secureToken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'reason': reason,
+          'url': currentUrl,
+        },
+      ).timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint("Direct report failed: $e");
+    }
   }
 
   void _showExitDialog({bool isReset = false}) {
@@ -368,7 +438,10 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                 child: Stack(
                   children: [
                     InAppWebView(
-                      initialUrlRequest: URLRequest(url: WebUri(currentUrl)),
+                      initialUrlRequest: URLRequest(
+                        url: WebUri(currentUrl),
+                        headers: {'X-MSAT-Auth-Token': secureToken},
+                      ),
                       initialSettings: InAppWebViewSettings(
                         userAgent: customUserAgent,
                         useShouldOverrideUrlLoading: false,
@@ -400,6 +473,10 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                           isError = true;
                           errorMsg = "Gagal memuat halaman ujian.";
                         });
+                      },
+                      onLoadStop: (controller, url) {
+                        // Simpan rasio layar awal untuk deteksi split screen
+                        initialAspectRatio ??= WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.aspectRatio;
                       },
                     ),
                     if (isError) _buildErrorView(),
