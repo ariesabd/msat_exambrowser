@@ -22,11 +22,21 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Setup Project
+      - name: Download Dependencies
+        run: flutter pub get
+
+      - name: Initialize Android Folder
+        run: flutter create . --platforms android
+
+      - name: Generate App Icons
         run: |
-          # Melengkapi struktur folder Flutter di server
-          flutter create . --platforms android
-          
+          # Pastikan file logo ada
+          ls -l assets/logo.png
+          # Gunakan perintah dart run
+          dart run flutter_launcher_icons
+
+      - name: Configure Android Native
+        run: |
           # Tanam Fitur Anti-Screenshot langsung ke Jantung Android (MainActivity)
           cat <<EOF > android/app/src/main/kotlin/com/example/msat_exambrowser/MainActivity.kt
           package com.example.msat_exambrowser
@@ -80,9 +90,6 @@ jobs:
 
           # Tambahan: Paksa abaikan error perbedaan versi Java/Kotlin agar build lanjut terus
           echo "kotlin.jvm.target.validation.mode=ignore" >> android/gradle.properties
-          
-      - name: Download Dependencies
-        run: flutter pub get
 
       - name: Universal Plugin Patch (Namespace Fix)
         run: |
@@ -106,14 +113,6 @@ jobs:
               fi
             fi
           done
-
-      - name: Generate App Icons
-        run: |
-          # Pastikan file logo ada
-          ls -l assets/logo.png
-          
-          # Gunakan perintah dart run (rekomendasi terbaru)
-          dart run flutter_launcher_icons
 
       - name: Build APK
         run: flutter build apk --release
