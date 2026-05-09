@@ -203,8 +203,12 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       return;
     }
 
-    // Jika rasio berubah lebih dari 15%, anggap sebagai split screen
-    if ((currentAspectRatio - initialAspectRatio!).abs() > 0.15) {
+    // Jika keyboard sedang terbuka (viewInsets.bottom > 0), abaikan pengecekan
+    // karena keyboard akan merubah rasio layar secara signifikan.
+    if (MediaQuery.of(context).viewInsets.bottom > 0) return;
+
+    // Jika rasio berubah lebih dari 20%, anggap sebagai split screen
+    if ((currentAspectRatio - initialAspectRatio!).abs() > 0.20) {
       _reportViolation("Layar terbagi (Split Screen)");
     }
   }
@@ -500,7 +504,22 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         disableContextMenu: true, // Matikan klik kanan
                         supportZoom: false, // Matikan zoom manual
                       ),
-                      onWebViewCreated: (controller) => webViewController = controller,
+                      onWebViewCreated: (controller) async {
+                        webViewController = controller;
+                        // Tanam Cookie Keamanan agar otomatis terkirim di setiap klik/submit form
+                        try {
+                          CookieManager cookieManager = CookieManager.instance();
+                          await cookieManager.setCookie(
+                            url: WebUri(currentUrl),
+                            name: "MSAT_SECURE_TOKEN",
+                            value: secureToken,
+                            isHttpOnly: false, // Set false agar bisa dibaca jika perlu, tapi aman di server
+                            isSecure: currentUrl.startsWith("https"),
+                          );
+                        } catch (e) {
+                          debugPrint("Failed to set security cookie: $e");
+                        }
+                      },
                       onLoadStart: (controller, url) {
                         debugPrint("Navigating to: $url");
                         setState(() {
