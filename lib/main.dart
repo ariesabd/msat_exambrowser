@@ -202,6 +202,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(30),
