@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
+import 'package:screen_protector/screen_protector.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,13 +22,15 @@ void main() async {
       fullScreen: true,
       center: true,
       backgroundColor: Colors.transparent,
-      skipTaskbar: false,
+      skipTaskbar: true, // Sembunyikan dari taskbar
       titleBarStyle: TitleBarStyle.hidden,
+      alwaysOnTop: true,
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
       await windowManager.setFullScreen(true);
+      await windowManager.setResizable(false);
       await windowManager.setPreventClose(true);
       await windowManager.setAlwaysOnTop(true);
     });
@@ -71,6 +74,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     windowManager.addListener(this);
+    ScreenProtector.preventScreenshotOn(); // Aktifkan blokir screenshot & rekam layar
     _setupExamEnvironment();
     _checkSavedUrl();
   }
@@ -453,6 +457,8 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                         domStorageEnabled: true,
                         databaseEnabled: true,
                         transparentBackground: true,
+                        disableContextMenu: true, // Matikan klik kanan
+                        supportZoom: false, // Matikan zoom manual
                       ),
                       onWebViewCreated: (controller) => webViewController = controller,
                       onLoadStart: (controller, url) {

@@ -20,6 +20,7 @@ dependencies:
   audio_session: ^0.1.16
   window_manager: ^0.3.9
   screen_retriever: ^0.1.9
+  screen_protector: ^2.0.0
 
 dev_dependencies:
   flutter_test:
