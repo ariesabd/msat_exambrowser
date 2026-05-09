@@ -179,6 +179,9 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
     if (state == AppLifecycleState.paused && isUrlSet) {
       _reportViolation("Aplikasi ditinggalkan");
     }
@@ -195,44 +198,119 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     final TextEditingController _passController = TextEditingController();
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(isReset ? 'Reset Konfigurasi' : 'Otoritas Proktor'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(isReset ? 'Masukkan password untuk ganti link:' : 'Masukkan password untuk keluar:'),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _passController,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'PIN Keamanan'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('BATAL')),
-          ElevatedButton(
-            onPressed: () {
-              if (_passController.text == exitPassword) {
-                Navigator.pop(context);
-                if (isReset) {
-                  _resetUrl();
-                } else {
-                  if (Platform.isWindows) {
-                    exit(0);
-                  } else {
-                    stopKioskMode().then((_) => SystemNavigator.pop());
-                  }
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password Salah!')));
-              }
-            },
-            child: Text(isReset ? 'OK' : 'KELUAR'),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, spreadRadius: 5)
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: isReset ? Colors.amber.withOpacity(0.1) : Colors.indigoAccent.withOpacity(0.1),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        isReset ? Icons.settings_backup_restore_rounded : Icons.lock_person_rounded,
+                        color: isReset ? Colors.amber : Colors.indigoAccent,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        isReset ? 'RESET KONFIGURASI' : 'OTORITAS PROKTOR',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(25),
+                child: Column(
+                  children: [
+                    Text(
+                      isReset ? 'Masukkan PIN untuk mengganti link ujian:' : 'Masukkan PIN untuk menutup aplikasi:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _passController,
+                      obscureText: true,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 10),
+                      decoration: InputDecoration(
+                        hintText: "••••",
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
+                        filled: true,
+                        fillColor: Colors.black.withOpacity(0.3),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.indigoAccent, width: 2)),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('BATAL', style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_passController.text == exitPassword) {
+                                Navigator.pop(context);
+                                if (isReset) {
+                                  _resetUrl();
+                                } else {
+                                  if (Platform.isWindows) {
+                                    exit(0);
+                                  } else {
+                                    stopKioskMode().then((_) => SystemNavigator.pop());
+                                  }
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('PIN Salah!'), backgroundColor: Colors.redAccent),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isReset ? Colors.amber : Colors.indigoAccent,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            child: Text(isReset ? 'RESET' : 'KELUAR', style: const TextStyle(fontWeight: FontWeight.w900)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -272,7 +350,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _showExitDialog();
+        // Tombol back dimatikan total agar siswa tidak terganggu
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -292,13 +370,24 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                       initialUrlRequest: URLRequest(url: WebUri(currentUrl)),
                       initialSettings: InAppWebViewSettings(
                         userAgent: customUserAgent,
-                        useShouldOverrideUrlLoading: true,
+                        useShouldOverrideUrlLoading: false,
                         mediaPlaybackRequiresUserGesture: false,
                         allowsInlineMediaPlayback: true,
-                        cacheEnabled: false,
-                        clearCache: true,
+                        cacheEnabled: true, // Ubah ke true agar session lebih stabil
+                        clearCache: false, // Jangan hapus cache tiap reload agar login awet
+                        javaScriptEnabled: true,
+                        domStorageEnabled: true,
+                        databaseEnabled: true,
+                        transparentBackground: true,
                       ),
                       onWebViewCreated: (controller) => webViewController = controller,
+                      onLoadStart: (controller, url) {
+                        debugPrint("Navigating to: $url");
+                        setState(() {
+                          isLoading = true;
+                          isError = false;
+                        });
+                      },
                       onProgressChanged: (controller, p) {
                         setState(() {
                           progress = p / 100;

@@ -31,12 +31,34 @@ jobs:
           cat <<EOF > android/app/src/main/kotlin/com/example/msat_exambrowser/MainActivity.kt
           package com.example.msat_exambrowser
           import android.view.WindowManager
+          import android.view.View
+          import android.os.Bundle
           import io.flutter.embedding.android.FlutterActivity
           import io.flutter.embedding.engine.FlutterEngine
+
           class MainActivity: FlutterActivity() {
-              override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  hideSystemUI()
+              }
+
+              override fun onWindowFocusChanged(hasFocus: Boolean) {
+                  super.onWindowFocusChanged(hasFocus)
+                  if (hasFocus) {
+                      hideSystemUI()
+                  }
+              }
+
+              private fun hideSystemUI() {
+                  window.decorView.systemUiVisibility = (
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                      or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                      or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                      or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                      or View.SYSTEM_UI_FLAG_FULLSCREEN
+                  )
                   window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                  super.configureFlutterEngine(flutterEngine)
               }
           }
           EOF
@@ -87,8 +109,11 @@ jobs:
 
       - name: Generate App Icons
         run: |
-          # Paksa generate ikon menggunakan logo dari assets
-          flutter pub run flutter_launcher_icons
+          # Pastikan file logo ada
+          ls -l assets/logo.png
+          
+          # Gunakan perintah dart run (rekomendasi terbaru)
+          dart run flutter_launcher_icons
 
       - name: Build APK
         run: flutter build apk --release
