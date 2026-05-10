@@ -501,7 +501,10 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                     InAppWebView(
                       initialUrlRequest: URLRequest(
                         url: WebUri(currentUrl),
-                        headers: {'X-MSAT-Auth-Token': secureToken},
+                        headers: {
+                          'X-MSAT-Auth-Token': secureToken,
+                          'User-Agent': customUserAgent, // Kirim UA di header juga
+                        },
                       ),
                       initialSettings: InAppWebViewSettings(
                         userAgent: customUserAgent,
