@@ -91,6 +91,23 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
   @override
   void onWindowBlur() {
     if (isUrlSet) {
+      if (Platform.isWindows) {
+        // Di Windows, fokus bisa berpindah ke WebView2 (anak jendela), yang memicu blur.
+        // Kita gunakan jeda singkat untuk mengecek apakah aplikasi benar-benar tidak aktif.
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+            _reportViolation("Aplikasi kehilangan fokus (Alt+Tab/Win Key)");
+          }
+        });
+      } else {
+        _reportViolation("Aplikasi kehilangan fokus (Alt+Tab/Win Key)");
+      }
+    }
+  }
+
+  @override
+  void onWindowMinimize() {
+    if (isUrlSet) {
       _reportViolation("Aplikasi kehilangan fokus (Alt+Tab/Win Key)");
     }
   }
@@ -228,8 +245,8 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       _checkSplitScreen(); // Re-check on resume
     }
-    if (state == AppLifecycleState.paused && isUrlSet) {
-      _reportViolation("Aplikasi ditinggalkan (Home/Recent)");
+    if (isUrlSet && (state == AppLifecycleState.paused || (Platform.isWindows && state == AppLifecycleState.inactive))) {
+      _reportViolation("Aplikasi ditinggalkan (Home/Recent/Alt+Tab)");
     }
   }
 
