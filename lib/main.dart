@@ -17,23 +17,28 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    await windowManager.ensureInitialized();
-    WindowOptions windowOptions = const WindowOptions(
-      fullScreen: true,
-      center: true,
-      backgroundColor: Colors.transparent,
-      skipTaskbar: true, // Sembunyikan dari taskbar
-      titleBarStyle: TitleBarStyle.hidden,
-      alwaysOnTop: true,
-    );
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-      await windowManager.setFullScreen(true);
-      await windowManager.setResizable(false);
-      await windowManager.setPreventClose(true);
-      await windowManager.setAlwaysOnTop(true);
-    });
+    try {
+      await windowManager.ensureInitialized();
+      WindowOptions windowOptions = const WindowOptions(
+        fullScreen: true,
+        center: true,
+        backgroundColor: Colors.white,
+        skipTaskbar: false, // Set false agar terlihat saat proses loading
+        titleBarStyle: TitleBarStyle.hidden,
+        alwaysOnTop: true,
+      );
+      
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+        await windowManager.setFullScreen(true);
+        await windowManager.setResizable(false);
+        await windowManager.setPreventClose(true);
+        await windowManager.setAlwaysOnTop(true);
+      });
+    } catch (e) {
+      debugPrint("WindowManager Initialization Error: $e");
+    }
   }
 
   runApp(const MaterialApp(
@@ -74,7 +79,11 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     windowManager.addListener(this);
-    ScreenProtector.preventScreenshotOn(); // Aktifkan blokir screenshot & rekam layar
+    try {
+      ScreenProtector.preventScreenshotOn(); // Aktifkan blokir screenshot & rekam layar
+    } catch (e) {
+      debugPrint("ScreenProtector Error: $e");
+    }
     _setupExamEnvironment();
     _checkSavedUrl();
   }
@@ -460,12 +469,16 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                     ),
                     
                     // Center Branding (Static)
-                    Row(
-                      children: [
-                        Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
-                        const SizedBox(width: 10),
-                        const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
-                      ],
+                    GestureDetector(
+                      onLongPress: () => _showExitDialog(isReset: true),
+                      onDoubleTap: () => _showExitDialog(isReset: true),
+                      child: Row(
+                        children: [
+                          Image.asset('assets/logo.png', height: 24, errorBuilder: (_,__,___) => const Icon(Icons.school, color: Colors.white, size: 20)),
+                          const SizedBox(width: 10),
+                          const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
+                        ],
+                      ),
                     ),
 
                     // Exit Button
@@ -584,19 +597,27 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(35),
-                          boxShadow: [
-                            BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 30, spreadRadius: 5)
-                          ]
+                      GestureDetector(
+                        onLongPress: () => _showExitDialog(isReset: true),
+                        onDoubleTap: () => _showExitDialog(isReset: true),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(35),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 30, spreadRadius: 5)
+                                ]
+                              ),
+                              child: Image.asset('assets/logo.png', height: 100, errorBuilder: (_,__,___) => const Icon(Icons.school, size: 100, color: Colors.white)),
+                            ),
+                            const SizedBox(height: 40),
+                            const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 4)),
+                          ],
                         ),
-                        child: Image.asset('assets/logo.png', height: 100, errorBuilder: (_,__,___) => const Icon(Icons.school, size: 100, color: Colors.white)),
                       ),
-                      const SizedBox(height: 40),
-                      const Text("MSAT XAMBRO", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 4)),
                       const SizedBox(height: 5),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
