@@ -19,7 +19,7 @@ jobs:
       - name: Setup Windows Project
         run: |
           # Inisialisasi folder windows jika belum ada
-          flutter create . --platforms windows
+          flutter create . --platforms windows --org com.msat
           
           # Ganti nama file EXE menjadi MSAT
           (Get-Content windows\CMakeLists.txt) -replace 'set\(BINARY_NAME "msat_exambrowser"\)', 'set(BINARY_NAME "MSAT")' | Set-Content windows\CMakeLists.txt
