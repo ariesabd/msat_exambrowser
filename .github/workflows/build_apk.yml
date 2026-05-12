@@ -37,22 +37,17 @@ jobs:
 
       - name: Configure Android Native
         run: |
-          # 1. Tentukan nama paket
-          OLD_PKG="com.msat.msat_exambrowser"
-          NEW_PKG="com.msat.exambrowser"
-          NEW_PATH="android/app/src/main/kotlin/com/msat/exambrowser"
+          # 1. Gunakan nama paket alami dari Flutter (org + project_name)
+          # Hasilnya: com.msat.msat_exambrowser
+          PKG_NAME="com.msat.msat_exambrowser"
+          PKG_PATH="android/app/src/main/kotlin/com/msat/msat_exambrowser"
 
-          # 2. Hapus total folder lama agar tidak konflik
-          rm -rf android/app/src/main/kotlin/com/msat/msat_exambrowser
-          mkdir -p $NEW_PATH
-
-          # 3. Tanam MainActivity.kt yang baru
-          cat <<EOF > $NEW_PATH/MainActivity.kt
-          package com.msat.exambrowser
+          # 2. Tanam MainActivity.kt ke lokasi default
+          cat <<EOF > $PKG_PATH/MainActivity.kt
+          package $PKG_NAME
           import io.flutter.embedding.android.FlutterActivity
           import android.os.Bundle
           import android.view.WindowManager
-          import android.view.View
 
           class MainActivity: FlutterActivity() {
               override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,23 +58,14 @@ jobs:
           }
           EOF
 
-          # 4. Ganti Nama Aplikasi & Label
+          # 3. Pengaturan UI & Izin (Simpel & Aman)
           sed -i 's/android:label=".*"/android:label="MSAT"/' android/app/src/main/AndroidManifest.xml
-
-          # 5. GLOBAL REPLACE: Ganti semua kemunculan paket lama ke paket baru di SELURUH folder android
-          find android -type f -exec sed -i "s/$OLD_PKG/$NEW_PKG/g" {} + || true
-
-          # 6. Tambahkan Izin Kamera
           sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
 
-          # 7. Paksa Namespace & SDK di build.gradle
+          # 4. Pastikan SDK minimal 21 untuk WebView
           if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/namespace = .*/namespace = "'$NEW_PKG'"/' android/app/build.gradle.kts
-            sed -i 's/applicationId = .*/applicationId = "'$NEW_PKG'"/' android/app/build.gradle.kts
             sed -i 's/minSdk = .*/minSdk = 21/' android/app/build.gradle.kts
           else
-            sed -i 's/namespace ".*"/namespace "'$NEW_PKG'"/' android/app/build.gradle || echo 'namespace "'$NEW_PKG'"' >> android/app/build.gradle
-            sed -i 's/applicationId ".*"/applicationId "'$NEW_PKG'"/' android/app/build.gradle
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
           fi
 
