@@ -82,6 +82,9 @@ jobs:
           # Ganti Nama Aplikasi yang muncul di HP
           sed -i 's/android:label=".*"/android:label="MSAT"/' android/app/src/main/AndroidManifest.xml
 
+          # Ganti Package Name di AndroidManifest agar sesuai dengan MainActivity.kt
+          sed -i 's/package="com.msat.msat_exambrowser"/package="com.msat.exambrowser"/' android/app/src/main/AndroidManifest.xml
+
           # Tambahkan Izin Kamera untuk Scan QR
           sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
 

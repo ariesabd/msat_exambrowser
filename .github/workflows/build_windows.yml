@@ -21,6 +21,9 @@ jobs:
           # Inisialisasi folder windows jika belum ada
           flutter create . --platforms windows --org com.msat
           
+          # Generate Ikon Windows
+          dart run flutter_launcher_icons
+          
           # Ganti nama file EXE menjadi MSAT
           (Get-Content windows\CMakeLists.txt) -replace 'set\(BINARY_NAME "msat_exambrowser"\)', 'set(BINARY_NAME "MSAT")' | Set-Content windows\CMakeLists.txt
           
