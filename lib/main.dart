@@ -245,7 +245,7 @@ class _ExamBrowserFinalState extends State<ExamBrowserFinal> with WidgetsBinding
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       _checkSplitScreen(); // Re-check on resume
     }
-    if (isUrlSet && (state == AppLifecycleState.paused || (Platform.isWindows && state == AppLifecycleState.inactive))) {
+    if (isUrlSet && (state == AppLifecycleState.paused)) {
       _reportViolation("Aplikasi ditinggalkan (Home/Recent/Alt+Tab)");
     }
   }
