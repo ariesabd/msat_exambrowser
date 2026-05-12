@@ -37,65 +37,49 @@ jobs:
 
       - name: Configure Android Native
         run: |
-          # Hapus folder default yang dibuat flutter (com.msat.msat_exambrowser) agar tidak konflik
-          rm -rf android/app/src/main/kotlin/com/msat/msat_exambrowser
-          
-          # Pastikan folder paket baru ada
-          mkdir -p android/app/src/main/kotlin/com/msat/exambrowser
+          # 1. Tentukan nama paket
+          OLD_PKG="com.msat.msat_exambrowser"
+          NEW_PKG="com.msat.exambrowser"
+          NEW_PATH="android/app/src/main/kotlin/com/msat/exambrowser"
 
-          # Tanam Fitur Anti-Screenshot langsung ke Jantung Android (MainActivity)
-          cat <<EOF > android/app/src/main/kotlin/com/msat/exambrowser/MainActivity.kt
+          # 2. Hapus total folder lama agar tidak konflik
+          rm -rf android/app/src/main/kotlin/com/msat/msat_exambrowser
+          mkdir -p $NEW_PATH
+
+          # 3. Tanam MainActivity.kt yang baru
+          cat <<EOF > $NEW_PATH/MainActivity.kt
           package com.msat.exambrowser
+          import io.flutter.embedding.android.FlutterActivity
+          import android.os.Bundle
           import android.view.WindowManager
           import android.view.View
-          import android.os.Bundle
-          import io.flutter.embedding.android.FlutterActivity
-          import io.flutter.embedding.engine.FlutterEngine
 
           class MainActivity: FlutterActivity() {
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
-                  hideSystemUI()
-              }
-
-              override fun onWindowFocusChanged(hasFocus: Boolean) {
-                  super.onWindowFocusChanged(hasFocus)
-                  if (hasFocus) {
-                      hideSystemUI()
-                  }
-              }
-
-              private fun hideSystemUI() {
-                  window.decorView.systemUiVisibility = (
-                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                      or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                      or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                      or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                      or View.SYSTEM_UI_FLAG_FULLSCREEN
-                  )
+                  // Fitur Keamanan: Anti Screenshot & Record
                   window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
               }
           }
           EOF
 
-          # Ganti Nama Aplikasi yang muncul di HP
+          # 4. Ganti Nama Aplikasi & Label
           sed -i 's/android:label=".*"/android:label="MSAT"/' android/app/src/main/AndroidManifest.xml
 
-          # Ganti Package Name di AndroidManifest agar sesuai dengan MainActivity.kt
-          sed -i 's/package="com.msat.msat_exambrowser"/package="com.msat.exambrowser"/' android/app/src/main/AndroidManifest.xml
+          # 5. GLOBAL REPLACE: Ganti semua kemunculan paket lama ke paket baru di SELURUH folder android
+          find android -type f -exec sed -i "s/$OLD_PKG/$NEW_PKG/g" {} + || true
 
-          # Tambahkan Izin Kamera untuk Scan QR
+          # 6. Tambahkan Izin Kamera
           sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
 
-          # Memastikan versi SDK sesuai untuk WebView
+          # 7. Paksa Namespace & SDK di build.gradle
           if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/applicationId = .*/applicationId = "com.msat.exambrowser"/' android/app/build.gradle.kts
+            sed -i 's/namespace = .*/namespace = "'$NEW_PKG'"/' android/app/build.gradle.kts
+            sed -i 's/applicationId = .*/applicationId = "'$NEW_PKG'"/' android/app/build.gradle.kts
             sed -i 's/minSdk = .*/minSdk = 21/' android/app/build.gradle.kts
-            sed -i 's/JavaVersion.VERSION_17/JavaVersion.VERSION_1_8/g' android/app/build.gradle.kts
-            sed -i 's/jvmTarget = "17"/jvmTarget = "1.8"/g' android/app/build.gradle.kts
           else
-            sed -i 's/applicationId ".*"/applicationId "com.msat.exambrowser"/' android/app/build.gradle
+            sed -i 's/namespace ".*"/namespace "'$NEW_PKG'"/' android/app/build.gradle || echo 'namespace "'$NEW_PKG'"' >> android/app/build.gradle
+            sed -i 's/applicationId ".*"/applicationId "'$NEW_PKG'"/' android/app/build.gradle
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
           fi
 
